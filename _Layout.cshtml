@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Online Shoping Portal</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <link rel='stylesheet' href='http://fonts.googleapis.com/icon?family=Material+Icons' type='text/css'>
+    <link href="http://fonts.googleapis.com/css?family=PT+Sans+Narrow:400,700" rel="stylesheet" type="text/css">
+    <link href="~/Content/sidenav.css" rel="stylesheet" />
+    <!-- //for-mobile-apps -->
+    <link href="~/Content/bootstrap.css" rel="stylesheet" media="all" />
+    <link href="~/Content/style.css" rel="stylesheet" media="all" />
+    <!-- font-awesome icons -->
+    <link href="~/Content/font-awesome.css" rel="stylesheet" media="all" />
+    <!-- //font-awesome icons -->
+    <!-- js -->
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <!-- //js -->
+    <link href='//fonts.googleapis.com/css?family=Ubuntu:400,300,300italic,400italic,500,500italic,700,700italic' rel='stylesheet' type='text/css'>
+    <link href='//fonts.googleapis.com/css?family=Open+Sans:400,300,300italic,400italic,600,600italic,700,700italic,800,800italic' rel='stylesheet' type='text/css'>
+    <!-- start-smoth-scrolling -->
+
+    <script src="~/Scripts/move-top.js"></script>
+    <script src="~/Scripts/easing.js"></script>
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            $(".scroll").click(function (event) {
+                event.preventDefault();
+                $('html,body').animate({ scrollTop: $(this.hash).offset().top }, 1000);
+            });
+
+            $.ajax({
+                url: '@Url.Action("GetMenuData", "Home")',
+                data: {},
+                type: "POST",
+                success: function (data) {
+                    $.each(data, function (index, el) {
+                        var li = $("<li></li>").append($("<a></a>").attr("id","menuLink").click(function () {
+                            $('#loadercontainer').fadeIn();
+                        }).attr("href", el.Url).html(el.Name));
+                        $("#menuTarget").append(li);
+                    });
+                }
+            });
+
+            @{
+                int CartCount = 0;
+                if (HttpContext.Current.Request.Cookies["cart"] != null)
+                {
+                    var Cookies = HttpContext.Current.Request.Cookies["cart"].Value;
+                    CartCount = Cookies.Split('|').Length;
+                }
+             }
+            if (@CartCount>0)
+                $('#CartCount').attr('data-count', @CartCount);
+
+
+            $("#Searchproduct").autocomplete({
+                source: function (request,response) {
+                    $.ajax({
+                        url: '../../Product/GetProductAutoSearch?prefix='+ request.term,
+                        dataType: "json",
+                        type: "GET",
+                        contentType: "application/json; charset=utf-8",
+                        success: function (data) {
+                            response(Search(data));
+                        },
+                        error: function (response) {
+                            alert(response.responseText);
+                        },
+                        failure: function (response) {
+                            alert(response.responseText);
+                        }
+                    });
+                },
+                select: function (e, i) {
+                    $("#hdnSelectedProductId").val(i.item.val);
+                    $("#Searchproduct").text(i.item.label);
+                    location.href = "/Product/GetProductbyId?id=" + $("#hdnSelectedProductId").val();
+                },
+                minLength: 1
+            });
+        });
+
+        function Search(data) {
+            var product=[];
+            for (var i = 0; i < data.length; i++) {
+                product.push({'label': data[i].ProductName, 'val' : data[i].ProductId});
+            }
+            return product;
+        }
+
+        function ProductSearch() {
+            location.href = "/Product/GetProductbyId?id=" + $("#hdnSelectedProductId").val();
+        }
+
+    </script>
+
+    <style type="text/css">
+        body {
+            background: #eee;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .toggle {
+            color: #666;
+            display: block;
+            height: 72px;
+            line-height: 72px;
+            text-align: center;
+            width: 72px;
+        }
+
+        h1 {
+            margin: 30px auto;
+            text-align: center;
+        }
+
+        #ex4 .p1[data-count]:after {
+            position: absolute;
+            right: 40%;
+            top: 8%;
+            content: attr(data-count);
+            font-size: 70%;
+            padding: .2em;
+            border-radius: 50%;
+            line-height: 1em;
+            color: white;
+            background: rgba(255,0,0,.85);
+            text-align: center;
+            min-width: 1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="w3l_offers">
+            <a href="products.html">Today's special Offers !</a>
+        </div>
+        <div>
+            @Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+        </div>
+        <div class="w3l_search">
+            <input type="hidden" name="selectedProduct" id="hdnSelectedProductId" />
+            <input type="text" id="Searchproduct" name="Product" value="Search a product..." onfocus="this.value = '';" onblur="if (this.value == '') {this.value = 'Search a product...';}" required="">
+            <input type="submit" value=" " id="btnSearch" onclick="ProductSearch()">
+        </div>
+        <div class="product_list_header">
+            @Html.Partial("_CartPartial")
+        </div>
+        <div class="w3l_header_right">
+            @Html.Partial("_LoginPartial")
+        </div>
+        <div class="w3l_header_right1">
+            @Html.ActionLink("Contact", "Contact", "Home", new { area = "" })
+        </div>
+        <div class="clearfix"> </div>
+    </div>
+    <nav class="sidenav" data-sidenav data-sidenav-toggle="#sidenav-toggle">
+        <div class="sidenav-brand">
+            @Html.ActionLink("Product", "Index", "Product")
+        </div>
+        <ul class="sidenav-menu">
+            <li>
+                <a href="javascript:;" data-sidenav-dropdown-toggle>
+                    <span class="sidenav-link-icon">
+                        <i class="material-icons">shopping_cart</i>
+                    </span>
+                    <span class="sidenav-link-title">Item</span>
+                    <span class="sidenav-dropdown-icon show" data-sidenav-dropdown-icon>
+                        <i class="material-icons">arrow_drop_down</i>
+                    </span>
+                    <span class="sidenav-dropdown-icon" data-sidenav-dropdown-icon>
+                        <i class="material-icons">arrow_drop_up</i>
+                    </span>
+                </a>
+                <ul id="menuTarget" class="sidenav-dropdown" data-sidenav-dropdown></ul>
+            </li>
+        </ul>
+    </nav>
+    <a href="javascript:;" class="toggle" id="sidenav-toggle">
+        <i class="material-icons">menu</i>
+    </a>
+    <div id="loaderblock"></div>
+    <div id="loadercontainer">
+        <img src="~/Content/themes/base/images/ajax-loader.gif" />
+    </div>
+    <div class="container body-content">
+        @RenderBody()
+    </div>
+    <!-- footer -->
+    <div class="footer">
+        <div class="container">
+            <div class="col-md-3 w3_footer_grid">
+                <h3>information</h3>
+                <ul class="w3_footer_grid_list">
+                    <li><a href="events.html">Events</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="products.html">Best Deals</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="short-codes.html">Short Codes</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3 w3_footer_grid">
+                <h3>policy info</h3>
+                <ul class="w3_footer_grid_list">
+                    <li><a href="faqs.html">FAQ</a></li>
+                    <li><a href="privacy.html">privacy policy</a></li>
+                    <li><a href="privacy.html">terms of use</a></li>
+                </ul>
+            </div>
+            <div class="clearfix"> </div>
+            <div class="wthree_footer_copy">
+                <p>© 2019 Online Shoping Store. All rights reserved</p>
+            </div>
+        </div>
+    </div>
+
+    
+    @*<link href="~/Content/datatables.min.css" rel="stylesheet" />*@
+    @*<link href="//cdn.datatables.net/tabletools/2.2.4/css/dataTables.tableTools.css" rel="stylesheet" />*@
+    <script type="text/javascript" src="@Url.Content("../../Scripts/bootstrap.min.js")"></script>
+    <script type="text/javascript" src="@Url.Content("../../Scripts/jquery.zoom.min.js")"></script>
+    <script type="text/javascript" src="@Url.Content("../../Scripts/jquery.unobtrusive-ajax.min.js")"></script>
+
+    @*<script src="~/Scripts/datatables.min.js"></script>*@
+    <script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
+    <script src="//cdn.datatables.net/tabletools/2.2.4/js/dataTables.tableTools.min.js"></script>
+
+    @*<link href="~/Content/datatables.min.css" rel="stylesheet" />*@
+    <link href="//cdn.datatables.net/1.10.7/css/jquery.dataTables.min.css" rel="stylesheet" />
+    <link href="//cdn.datatables.net/tabletools/2.2.4/css/dataTables.tableTools.css" rel="stylesheet" />
+    <script src="~/Scripts/sidenav.js"></script>
+    <script>$('[data-sidenav]').sidenav();</script>
+
+    @RenderSection("scripts", required: false)
+
+
+</body>
+</html>
